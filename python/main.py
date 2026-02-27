@@ -12,6 +12,7 @@ import pickle
 import os
 import cv2 as cv
 import numpy as np
+import scipy
 
 x = list()
 y_resistance = list()
@@ -28,6 +29,11 @@ for root, dirs, files in os.walk('../archive'):
             image = cv.resize(image, (700, 700))
             hsv_planes = cv.split(image)
 
+            # here we are appending the mean, std, and skew of the 2d arrays of pixel values to show distribution of pixel values
+            hsv_mean = [np.mean(hsv_planes[0]), np.mean(hsv_planes[1]), np.mean(hsv_planes[2])]
+            hsv_std = [np.std(hsv_planes[0]), np.std(hsv_planes[1]), np.std(hsv_planes[2])]
+            hsv_skew = [scipy.stats.skew(hsv_planes[0].flatten()), scipy.stats.skew(hsv_planes[1].flatten()), scipy.stats.skew(hsv_planes[2].flatten())]
+
             histSize = 180;
             histRange = (0, 180)
             hue_hist = cv.calcHist(hsv_planes, [0], None, [histSize], histRange, False)
@@ -38,7 +44,12 @@ for root, dirs, files in os.walk('../archive'):
             sat_hist = cv.calcHist(hsv_planes, [1], None, [histSize], histRange, False)
             sat_hist = sat_hist.flatten()
 
-            x_hist = np.concatenate((hue_hist, sat_hist))
+            histSize = 255
+            histRange = (0, 256)
+            bright_hist = cv.calcHist(hsv_planes, [2], None, [histSize], histRange, False)
+            bright_hist = bright_hist.flatten()
+
+            x_hist = np.concatenate((hue_hist, sat_hist, bright_hist, hsv_mean, hsv_std, hsv_skew))
 
             y_resistance.append(resistance)
             y_wattage.append(wattage)
@@ -56,7 +67,7 @@ x_test_scaled = scaler.transform(x_test)
 
 y_train_scaled = np.column_stack((y_resistance_train, y_wattage_train))
 
-model = MultiOutputClassifier(SVC())
+model = MultiOutputClassifier(SVC(kernel='linear', probability=True))
 model.fit(x_train_scaled, y_train_scaled)
 
 with open("model_and_scaler.pkl", "wb") as f:
