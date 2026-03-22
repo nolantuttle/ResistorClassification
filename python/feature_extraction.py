@@ -44,6 +44,10 @@ def extract_features(filepath):
                 # concatenate all the features into a single feature vector for the model
                 x_hist = np.concatenate((hue_hist, sat_hist, bright_hist, hsv_mean, hsv_std, hsv_skew))
 
+                if np.any(np.isnan(x_hist)):
+                    continue
+
+
                 # append the feature vector and labels to the respective lists
                 y_resistance.append(resistance)
                 y_wattage.append(wattage)
