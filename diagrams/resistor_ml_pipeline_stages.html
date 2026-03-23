@@ -1,0 +1,126 @@
+<style>
+  .stage { border: 0.5px solid var(--color-border-tertiary); border-radius: 12px; background: var(--color-background-secondary); padding: 16px 20px; }
+  .stage-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+  .stage-sub { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 12px; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; margin: 2px 2px 2px 0; font-family: var(--font-mono); }
+  .tag-blue { background: #E6F1FB; color: #0C447C; }
+  .tag-coral { background: #FAECE7; color: #712B13; }
+  .tag-green { background: #EAF3DE; color: #27500A; }
+  .tag-purple { background: #EEEDFE; color: #3C3489; }
+  .tag-amber { background: #FAEEDA; color: #633806; }
+  @media (prefers-color-scheme: dark) {
+    .tag-blue { background: #0C447C; color: #B5D4F4; }
+    .tag-coral { background: #712B13; color: #F5C4B3; }
+    .tag-green { background: #27500A; color: #C0DD97; }
+    .tag-purple { background: #3C3489; color: #CECBF6; }
+    .tag-amber { background: #633806; color: #FAC775; }
+  }
+  .metric { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+  .metric-label { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+  .arrow { text-align: center; color: var(--color-text-tertiary); font-size: 18px; padding: 4px 0; }
+  .metrics-row { display: flex; gap: 12px; }
+  .metric-box { flex: 1; border: 0.5px solid var(--color-border-tertiary); border-radius: 8px; padding: 12px 16px; background: var(--color-background-primary); }
+  .accent-left { border-left: 3px solid; border-radius: 0 8px 8px 0; }
+  .accent-resistance { border-left-color: #534AB7; }
+  .accent-wattage { border-left-color: #0F6E56; }
+  .accent-classes { border-left-color: #993C1D; }
+  .accent-images { border-left-color: #854F0B; }
+</style>
+
+<div style="padding: 20px 0;">
+
+  <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+    <div class="metric-box accent-left accent-resistance">
+      <div class="metric">67%</div>
+      <div class="metric-label">Resistance accuracy</div>
+    </div>
+    <div class="metric-box accent-left accent-wattage">
+      <div class="metric">80%</div>
+      <div class="metric-label">Wattage accuracy</div>
+    </div>
+    <div class="metric-box accent-left accent-classes">
+      <div class="metric">37</div>
+      <div class="metric-label">Resistance classes</div>
+    </div>
+    <div class="metric-box accent-left accent-images">
+      <div class="metric">~2,800</div>
+      <div class="metric-label">Training images</div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="stage-title">1. Dataset loading</div>
+    <div class="stage-sub">Recursively walk archive directory, parse labels from filenames</div>
+    <span class="tag tag-blue">os.walk()</span>
+    <span class="tag tag-blue">cv2.imread()</span>
+    <span class="tag tag-coral">resistance = file.split("_")[0]</span>
+    <span class="tag tag-coral">wattage = file.split("_")[1]</span>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <div class="stage">
+    <div class="stage-title">2. Image preprocessing</div>
+    <div class="stage-sub">Color space conversion, resize to 700×700, optional GrabCut segmentation</div>
+    <span class="tag tag-blue">cv2.cvtColor(BGR→HSV)</span>
+    <span class="tag tag-blue">cv2.resize(700, 700)</span>
+    <span class="tag tag-coral">cv2.grabCut()</span>
+    <span class="tag tag-coral">cv2.findContours()</span>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <div class="stage">
+    <div class="stage-title">3. Feature extraction</div>
+    <div class="stage-sub">Per-image 689-dimensional feature vector combining histograms and color moments</div>
+    <span class="tag tag-purple">hue histogram (180 bins)</span>
+    <span class="tag tag-purple">saturation histogram (255 bins)</span>
+    <span class="tag tag-purple">brightness histogram (255 bins)</span>
+    <span class="tag tag-purple">HSV mean, std, skew (9 values)</span>
+    <span class="tag tag-blue">cv2.calcHist()</span>
+    <span class="tag tag-blue">scipy.stats.skew()</span>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <div class="stage">
+    <div class="stage-title">4. Train / test split + scaling</div>
+    <div class="stage-sub">80/20 split, standardize feature vectors to zero mean unit variance</div>
+    <span class="tag tag-blue">train_test_split(test_size=0.2)</span>
+    <span class="tag tag-blue">StandardScaler()</span>
+    <span class="tag tag-coral">random_state=42</span>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <div class="stage">
+    <div class="stage-title">5. Multi-output SVM training</div>
+    <div class="stage-sub">Two simultaneous classifiers — one per label — wrapped in MultiOutputClassifier</div>
+    <span class="tag tag-green">MultiOutputClassifier(SVC())</span>
+    <span class="tag tag-green">kernel='linear'</span>
+    <span class="tag tag-green">probability=True</span>
+    <span class="tag tag-coral">y = np.column_stack([resistance, wattage])</span>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <div class="stage">
+    <div class="stage-title">6. Evaluation</div>
+    <div class="stage-sub">Per-label accuracy and full classification report across all classes</div>
+    <span class="tag tag-amber">accuracy_score(y_test, y_pred[:,0])</span>
+    <span class="tag tag-amber">accuracy_score(y_test, y_pred[:,1])</span>
+    <span class="tag tag-amber">classification_report(zero_division=0)</span>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <div class="stage">
+    <div class="stage-title">7. Deployment</div>
+    <div class="stage-sub">Model serialized and served via Flask on AWS EC2 with image upload UI</div>
+    <span class="tag tag-blue">pickle.dump(model + scaler)</span>
+    <span class="tag tag-green">Flask POST /</span>
+    <span class="tag tag-green">render_template()</span>
+    <span class="tag tag-coral">AWS EC2</span>
+  </div>
+
+</div>
