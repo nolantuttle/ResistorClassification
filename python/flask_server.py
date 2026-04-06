@@ -7,6 +7,7 @@ UPLOAD_FOLDER = 'python/static/uploads'
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+app.run(host='0.0.0.0', port=5000)
 
 def allowed_file(filename):
     return '.' in filename and \
