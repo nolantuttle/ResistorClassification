@@ -12,7 +12,7 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/resistor-classifier', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
         # check if the post request has the file part
@@ -29,6 +29,7 @@ def upload_file():
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             prediction = pr.predict_resistor(os.path.join(UPLOAD_FOLDER, filename))
+            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], filename))  # cleanup
             return render_template('results.html', filename=filename, resistance=prediction[0][0], wattage=prediction[0][1])
         
     return render_template('index.html')
