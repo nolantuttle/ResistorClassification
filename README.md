@@ -31,6 +31,8 @@ pip install -r requirements.txt
 
 Requires AWS credentials with access to the `resistor-classifier` S3 bucket.
 
+(You may have to chmod +x that thing johnny)
+
 ```bash
 ./download_dataset.sh
 ```
